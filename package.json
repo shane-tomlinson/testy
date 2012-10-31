@@ -8,7 +8,7 @@
     "temp": "0.4.0"
   },
   "devDependencies": {
-    "awsbox": "git://github.com/shane-tomlinson/awsbox.git#dcecd025484a49d20998f89de77941a7eebef69e"
+    "awsbox": "0.3.3"
   },
   "engines": {
     "node": ">= 0.8.11"
