@@ -6,7 +6,7 @@ const express         = require('express'),
       path            = require('path'),
       fs              = require('fs'),
       temp            = require('temp'),
-      git             = require('awsbox/lib/git'),
+      git             = require('./git'),
       deployer        = require('./deployer');
 
 /*const repoURL = "git://github.com/mozilla/browserid.git"*/
@@ -42,7 +42,7 @@ app.get('/:sha', function(req, res, next) {
     git.clone(dirPath, repoURL, function(err, r) {
       git.checkout(dirPath, sha, function(err, r) {
         git.install_deps(dirPath, function(err, r) {
-          var aws_instance_name = "tester-" + sha.substr(0, 10);
+          var aws_instance_name = "tester-" + sha.substr(0, 8);
           deployer.create(dirPath, aws_instance_name, "c1.medium", function(err, r) {
             deployer.update(dirPath, aws_instance_name, function(err, r) {
               deployer.destroy(dirPath, aws_instance_name, function(err, r) {

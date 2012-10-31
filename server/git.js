@@ -1,0 +1,64 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+const child_process     = require('child_process'),
+      spawn             = child_process.spawn,
+      path              = require('path');
+
+// getEnv is used to pass all the rest of the environment variables to git.
+// This prevents the user from being required to enter their password on a git
+// push
+function getEnv(extraEnv) {
+  var env = {};
+
+  // copy over the original environment
+  for(var key in process.env) {
+    env[key] = process.env[key];
+  }
+
+  // add each item in extraEnv
+  for(var key in extraEnv) {
+    env[key] = extraEnv[key];
+  }
+
+  return env;
+}
+
+function gitCommand(cmd, args, dir, cb) {
+  var env = dir ? getEnv({
+    GIT_DIR: path.join(dir, ".git"),
+    GIT_WORK_TREE: dir
+  }) : getEnv();
+
+  spawnCommand('git', [ cmd ].concat(args), {
+    env: env
+  }, cb);
+}
+
+function spawnCommand(cmd, args, opts, cb) {
+  var p = spawn(cmd, args, opts);
+  p.stdout.pipe(process.stdout);
+  p.stderr.pipe(process.stderr);
+  p.on('exit', function(code, signal) {
+    return cb(code = 0);
+  });
+
+  return p;
+}
+
+exports.clone = function(dir, repo, cb) {
+  gitCommand('clone', [ repo, dir ], null, cb);
+};
+
+exports.checkout = function(dir, sha, cb) {
+  gitCommand('checkout', [ sha ], dir, cb);
+};
+
+exports.install_deps = function(dir, cb) {
+  spawnCommand('npm', ['install'], {
+    cwd: dir,
+    env: process.env
+  }, cb);
+};
+
