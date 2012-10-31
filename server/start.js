@@ -17,7 +17,8 @@ function checkErr(state, err, res) {
   if (err) {
     console.error(err);
     teardown(state, function() {
-      res.send(500, err);
+      res.write(err);
+      res.end();
       process.exit(1);
     });
   }
