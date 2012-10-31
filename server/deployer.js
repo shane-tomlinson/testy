@@ -5,8 +5,6 @@
 const child_process     = require('child_process');
 
 var deployerCmd = function(cmd, args, cwd, cb) {
-  console.log("cwd", cwd);
-
   // deploy.js does all its work based on the PWD variable.
   process.env['PWD'] = cwd;
 

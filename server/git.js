@@ -51,8 +51,8 @@ exports.clone = function(dir, repo, cb) {
   gitCommand('clone', [ repo, dir ], null, cb);
 };
 
-exports.checkout = function(dir, sha, cb) {
-  gitCommand('checkout', [ sha ], dir, cb);
+exports.checkout = function(dir, sha, branch_name, cb) {
+  gitCommand('checkout', [ sha, "-b", branch_name ], dir, cb);
 };
 
 exports.install_deps = function(dir, cb) {

@@ -40,7 +40,7 @@ app.get('/:sha', function(req, res, next) {
   // 9) remove the temporary directory
   temp.mkdir(null, function(err, dirPath) {
     git.clone(dirPath, repoURL, function(err, r) {
-      git.checkout(dirPath, sha, function(err, r) {
+      git.checkout(dirPath, sha, "branch_to_test", function(err, r) {
         git.install_deps(dirPath, function(err, r) {
           var aws_instance_name = "tester-" + sha.substr(0, 8);
           deployer.create(dirPath, aws_instance_name, "c1.medium", function(err, r) {
