@@ -1,0 +1,6 @@
+{
+  "processes": [
+    "server/start.js"
+  ]
+}
+
