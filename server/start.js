@@ -149,5 +149,5 @@ app.get('/:sha', function(req, res, next) {
   });
 });
 
-var port = process.env['NODE_ENV'] === "aws" ? 80 : 3000;
-app.listen(port);
+var port = process.env['PORT'] || 3000;
+app.listen(port, '127.0.0.1');
