@@ -6,9 +6,8 @@ const express         = require('express'),
       path            = require('path'),
       fs              = require('fs'),
       temp            = require('temp'),
-      git             = require('awsbox/lib/git');
-
-console.log(git);
+      git             = require('awsbox/lib/git'),
+      deployer        = require('./deployer');
 
 /*const repoURL = "git://github.com/mozilla/browserid.git"*/
 const repoURL = "file://192.168.1.88/Users/stomlinson/development/browserid";
@@ -43,8 +42,15 @@ app.get('/:sha', function(req, res, next) {
     git.clone(dirPath, repoURL, function(err, r) {
       git.checkout(dirPath, sha, function(err, r) {
         git.install_deps(dirPath, function(err, r) {
-          temp.rmdir(dirPath, function(err, r) {
-            res.send(200, req.param.sha);
+          var aws_instance_name = "tester-" + sha.substr(0, 10);
+          deployer.create(dirPath, aws_instance_name, "c1.medium", function(err, r) {
+            deployer.update(dirPath, aws_instance_name, function(err, r) {
+              deployer.destroy(dirPath, aws_instance_name, function(err, r) {
+                fs.rmdir(dirPath, function(err, r) {
+                  res.send(200, req.param.sha);
+                });
+              });
+            })
           });
         });
       });
