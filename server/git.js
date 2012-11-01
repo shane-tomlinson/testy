@@ -41,7 +41,7 @@ function spawnCommand(cmd, args, opts, cb) {
   p.stdout.pipe(process.stdout);
   p.stderr.pipe(process.stderr);
   p.on('exit', function(code, signal) {
-    return cb(code = 0);
+    return cb(code);
   });
 
   return p;
