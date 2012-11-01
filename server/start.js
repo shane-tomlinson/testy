@@ -25,22 +25,26 @@ function checkErr(state, err, res) {
 
 var statusUpdateTimeout;
 function teardown(state, cb) {
+  function done() {
+    cb && cb();
+  }
+
   if (statusUpdateTimeout) {
     clearTimeout(statusUpdateTimeout);
     statusUpdateTimeout = null;
   }
 
-  if (state.instance_to_remove) {
-    deployer.destroy(state.dir_to_remove, state.instance_to_remove, function(err, r) {
-      wrench.rmdirRecursive(state.dir_to_remove, cb);
-    });
-  } else if (state.dir_to_remove) {
-    wrench.rmdirRecursive(state.dir_to_remove, cb);
-  }
-
   var index = testsBeingRun.indexOf(state);
   if (index > -1) {
     testsBeingRun.splice(index, 1);
+  }
+
+  if (state.instance_to_remove) {
+    deployer.destroy(state.dir_to_remove, state.instance_to_remove, function(err, r) {
+      wrench.rmdirRecursive(state.dir_to_remove, done);
+    });
+  } else if (state.dir_to_remove) {
+    wrench.rmdirRecursive(state.dir_to_remove, done);
   }
 }
 
