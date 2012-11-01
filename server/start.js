@@ -9,9 +9,7 @@ const express         = require('express'),
       git             = require('./git'),
       deployer        = require('./deployer');
 
-const repoURL = "git://github.com/shane-tomlinson/browserid.git"
-/*const repoURL
- * = "file://192.168.1.88/Users/stomlinson/development/browserid";*/
+const DEFAULT_REPO_URL = "git://github.com/mozilla/browserid.git";
 
 var testsBeingRun = [];
 
@@ -84,10 +82,11 @@ app.get('/', function(req, res, next) {
   });
 });
 
-app.get('/:sha', function(req, res, next) {
+app.get('/test/:sha', function(req, res, next) {
   var sha = req.params.sha;
+  var repoURL = /*req.query.repo || */DEFAULT_REPO_URL;
 
-  console.log(sha);
+  console.log(repoURL, sha);
 
   // get the instance name, append a random number onto the end to help avoid
   // collisions
