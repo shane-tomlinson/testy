@@ -13,6 +13,8 @@ const repoURL = "git://github.com/shane-tomlinson/browserid.git"
 /*const repoURL
  * = "file://192.168.1.88/Users/stomlinson/development/browserid";*/
 
+var testsBeingRun = [];
+
 function checkErr(state, err, res) {
   if (err) {
     console.error(err);
@@ -37,6 +39,11 @@ function teardown(state, cb) {
     });
   } else if (state.dir_to_remove) {
     fs.rmdir(state.dir_to_remove, cb);
+  }
+
+  var index = testsBeingRun.indexOf(state);
+  if (index > -1) {
+    testsBeingRun.splice(index, 1);
   }
 }
 
@@ -71,8 +78,15 @@ app.use(express.bodyParser())
    }))
    .use(express.static(path.join(__dirname, "..", "client")));
 
+app.get('/', function(req, res, next) {
+  res.render('index', {
+    tests: testsBeingRun
+  });
+});
+
 app.get('/:sha', function(req, res, next) {
   var sha = req.params.sha;
+
   console.log(sha);
 
   // get the instance name, append a random number onto the end to help avoid
@@ -84,8 +98,14 @@ app.get('/:sha', function(req, res, next) {
   // remove when teardown occurs.
   var state = {
     dir_to_remove: undefined,
-    instance_to_remove: undefined
+    instance_to_remove: undefined,
+    sha: sha,
+    repo: repoURL,
+    // If this is a github repo, prettify the printed URL.
+    github_repo_url: repoURL.indexOf("github.com") > -1 ? repoURL.replace(/^git:/, 'https:').replace(/\.git$/, '') : null
   };
+
+  testsBeingRun.push(state);
 
   // process:
   // 1) make a temp directory to clone repo into

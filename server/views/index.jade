@@ -1,0 +1,12 @@
+extends layout
+
+block content
+  h2 Tests currently being run
+
+  if tests.length
+    ul
+      each test in tests
+        li 
+          a(href="#{test.github_repo_url || test.repo}/tree/#{test.sha}", target="_blank") #{test.github_repo_url || test.repo}/#{test.sha}
+  else
+    p None
