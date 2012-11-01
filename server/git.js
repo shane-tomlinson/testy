@@ -55,8 +55,17 @@ exports.checkout = function(dir, sha, branch_name, cb) {
   gitCommand('checkout', [ sha, "-b", branch_name ], dir, cb);
 };
 
-exports.install_deps = function(dir, cb) {
-  spawnCommand('npm', ['install'], {
+exports.install_deps = function(dir, dep, cb) {
+  if (!cb) {
+    cb = dep;
+    dep = null;
+  }
+
+  var args = ['install'];
+
+  if (dep) args.push(dep);
+
+  spawnCommand('npm', args, {
     cwd: dir,
     env: process.env
   }, cb);

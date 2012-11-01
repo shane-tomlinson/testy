@@ -9,6 +9,8 @@ const child_process     = require('child_process'),
 var deployerCmd = function(cmd, args, cwd, cb) {
   // deploy.js does all its work based on the PWD variable.
   process.env['PWD'] = cwd;
+  process.env['GIT_DIR'] = path.join(cwd, ".git");
+  process.env['GIT_WORK_TREE'] = cwd;
 
   var options = {
     cwd: cwd,

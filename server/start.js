@@ -9,7 +9,7 @@ const express         = require('express'),
       git             = require('./git'),
       deployer        = require('./deployer');
 
-const repoURL = "git://github.com/mozilla/browserid.git"
+const repoURL = "git://github.com/shane-tomlinson/browserid.git"
 /*const repoURL
  * = "file://192.168.1.88/Users/stomlinson/development/browserid";*/
 
@@ -17,7 +17,7 @@ function checkErr(state, err, res) {
   if (err) {
     console.error(err);
     teardown(state, function() {
-      res.write(err);
+      res.write(" >>> Aborting: " + String(err));
       res.end();
       process.exit(1);
     });
@@ -118,31 +118,33 @@ app.get('/:sha', function(req, res, next) {
 
         sendUpdate(res, " >>> checked out: " + sha + ", installing dependencies");
 
-        git.install_deps(dirPath, function(err, r) {
+        git.install_deps(dirPath, "awsbox", function(err, r) {
           checkErr(state, err, res);
+          git.install_deps(dirPath, "temp", function(err, r) {
 
-          sendUpdate(res, " >>> dependencies installed, creating AWS instance");
+            sendUpdate(res, " >>> dependencies installed, creating AWS instance");
 
-          deployer.create(dirPath, aws_instance_name, "c1.medium", function(err, r) {
-            checkErr(state, err, res);
-
-            sendUpdate(res, " >>> AWS instance created, pushing code & running tests");
-            state.instance_to_remove = aws_instance_name;
-
-            deployer.update(dirPath, aws_instance_name, function(err, r) {
+            deployer.create(dirPath, aws_instance_name, "c1.medium", function(err, r) {
               checkErr(state, err, res);
 
-              sendUpdate(res, " >>> tests run, fetching results");
-              deployer.getTestResults(dirPath, aws_instance_name, function(err, r) {
+              sendUpdate(res, " >>> AWS instance created, pushing code & running tests");
+              state.instance_to_remove = aws_instance_name;
+
+              deployer.update(dirPath, aws_instance_name, function(err, r) {
                 checkErr(state, err, res);
 
-                sendUpdate(res, " >>> results fetched:");
-                res.write(r);
-                res.end();
+                sendUpdate(res, " >>> tests run, fetching results");
+                deployer.getTestResults(dirPath, aws_instance_name, function(err, r) {
+                  checkErr(state, err, res);
 
-                teardown(state);
-              });
-            })
+                  sendUpdate(res, " >>> results fetched:");
+                  res.write(r);
+                  res.end();
+
+                  teardown(state);
+                });
+              })
+            });
           });
         });
       });
