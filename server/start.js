@@ -86,6 +86,7 @@ app.get('/test/:sha', function(req, res, next) {
   var sha = req.params.sha;
   var repoURL = /*req.query.repo || */DEFAULT_REPO_URL;
 
+  console.log("test started by:", req.connection.remoteAddress);
   console.log(repoURL, sha);
 
   // get the instance name, append a random number onto the end to help avoid
