@@ -4,8 +4,7 @@
 
 const express         = require('express'),
       path            = require('path'),
-      fs              = require('fs'),
-      temp            = require('temp'),
+      wrench          = require('wrench'),
       git             = require('./git'),
       deployer        = require('./deployer');
 
@@ -33,10 +32,10 @@ function teardown(state, cb) {
 
   if (state.instance_to_remove) {
     deployer.destroy(state.dir_to_remove, state.instance_to_remove, function(err, r) {
-      fs.rmdir(state.dir_to_remove, cb);
+      wrench.rmdirRecursive(state.dir_to_remove, cb);
     });
   } else if (state.dir_to_remove) {
-    fs.rmdir(state.dir_to_remove, cb);
+    wrench.rmdirRecursive(state.dir_to_remove, cb);
   }
 
   var index = testsBeingRun.indexOf(state);
@@ -91,7 +90,7 @@ app.get('/test/:sha', function(req, res, next) {
 
   // get the instance name, append a random number onto the end to help avoid
   // collisions
-  var aws_instance_name = "testy-" + sha.substr(0, 8) + "-" + Math.floor(10000 * Math.random());
+  var aws_instance_name = "testy-" + sha.substr(0, 7) + "-" + Math.floor(10000 * Math.random());
 
   // since multiple tests can be running at the same time, keep a small state
   // momento that we can use to keep track of which directory/instance to
@@ -121,7 +120,7 @@ app.get('/test/:sha', function(req, res, next) {
     'Content-Type': 'text/plain; charset=utf-8'
   });
 
-  temp.mkdir(null, function(err, dirPath) {
+  makeTempDir(aws_instance_name, function(err, dirPath) {
     if(checkErr(state, err, res)) return;
 
     sendUpdate(res, " >>> temporary directory created");
@@ -173,6 +172,20 @@ app.get('/test/:sha', function(req, res, next) {
     });
   });
 });
+
+function makeTempDir(tempDirName, done) {
+  var tempDirPath = path.join(__dirname, "var", tempDirName);
+
+  var err = null;
+
+  try {
+    wrench.mkdirSyncRecursive(tempDirPath, 0777);
+  } catch(e) {
+    err = e;
+  }
+
+  done(err, tempDirPath);
+}
 
 var port = process.env['PORT'] || 3000;
 app.listen(port, '127.0.0.1');
