@@ -214,10 +214,22 @@ function rmTempDir(tempDirName, done) {
   wrench.rmdirRecursive(tempDirName, done);
 }
 
-function checkRepoAllowed(repoURL, res, done) {
-  var parsedURL = url.parse(repoURL);
-  var repoOwner = parsedURL.path.split("/")[1];
+function getRepoOwner(repoURL) {
+  var owner;
 
+  if (/^https:\/\//.test(repoURL) || /^git:\/\//.test(repoURL)) {
+    var parsedURL = url.parse(repoURL);
+    owner = parsedURL.path.split("/")[1];
+  }
+  else {
+    owner = /:([^\/]*)\//.exec(repoURL)[1];
+  }
+
+  return owner;
+}
+
+function checkRepoAllowed(repoURL, res, done) {
+  var repoOwner = getRepoOwner(repoURL);
   var allowed = allowed_users.indexOf(repoOwner) > -1;
 
   if (!allowed) {
