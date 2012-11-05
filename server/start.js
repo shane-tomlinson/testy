@@ -145,7 +145,7 @@ app.post('/test', function(req, res, next) {
     makeTempDir(aws_instance_name, function(err, dirPath) {
       if(checkErr(state, err, res)) return;
 
-      sendUpdate(res, " >>> temporary directory created, cloning repo");
+      sendUpdate(res, " >>> temporary directory created, cloning repo: " + repoURL);
 
       state.dir_to_remove = dirPath;
 
