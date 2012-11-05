@@ -6,8 +6,8 @@ const express         = require('express'),
       path            = require('path'),
       url             = require('url'),
       wrench          = require('wrench'),
-      git             = require('./git'),
-      deployer        = require('./deployer'),
+      git             = require('./lib/git'),
+      deployer        = require('./lib/deployer'),
       allowed_users   = require('./etc/allowed-users').allowed_users;
 
 const DEFAULT_REPO_URL = "git://github.com/mozilla/browserid.git";
