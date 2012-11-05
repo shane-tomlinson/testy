@@ -48,7 +48,11 @@ function spawnCommand(cmd, args, opts, cb) {
 }
 
 exports.clone = function(dir, repo, cb) {
-  gitCommand('clone', [ repo, dir ], null, cb);
+  var env = getEnv();
+
+  spawnCommand('git', [ 'clone', repo, dir ], {
+    env: env
+  }, cb);
 };
 
 exports.checkout = function(dir, sha, branch_name, cb) {
