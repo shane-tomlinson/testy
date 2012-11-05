@@ -11,6 +11,8 @@ var deployerCmd = function(cmd, args, cwd, cb) {
   process.env['PWD'] = cwd;
   process.env['GIT_DIR'] = path.join(cwd, ".git");
   process.env['GIT_WORK_TREE'] = cwd;
+  // force selenium tests to run against all browsers.
+  process.env['PERSONA_BROWSER'] = 'all';
 
   var options = {
     cwd: cwd,
