@@ -14,10 +14,6 @@ app.set('view engine', 'jade');
 app.set('views', path.join(__dirname, "views"));
 
 app.use(express.bodyParser())
-   .use(express.cookieParser())
-   .use(express.session({
-     secret: 'mysecret'
-   }))
    .use(express.static(path.join(__dirname, "..", "client")));
 
 app.get('/', function(req, res, next) {
