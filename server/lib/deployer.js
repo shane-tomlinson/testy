@@ -8,8 +8,7 @@ const child_process     = require('child_process'),
       toolbelt          = require('./toolbelt');
 
 var deployerCmd = function(cmd, args, cwd, cb) {
-  var env = toolbelt.deepCopy(process.env);
-  toolbelt.extend(env, {
+  var env = toolbelt.copyExtendEnv({
     // deploy.js does all its work based on the PWD variable.
     PWD: cwd,
     GIT_DIR: path.join(cwd, ".git"),
@@ -60,10 +59,11 @@ exports.getTestResults = function(cwd, name, cb) {
     fs.mkdirSync(resultsPath);
   }
 
-  process.env['PWD'] = resultsPath;
   var options = {
     cwd: resultsPath,
-    env: process.env
+    env: toolbelt.copyExtendEnv({
+      PWD: resultsPath
+    })
   };
 
   var cmd = 'scp -o "StrictHostKeyChecking no" app@' + name + ".personatest.org:code/automation-tests/results/*.xml .";
@@ -91,7 +91,7 @@ function getResultsFromDirectory(dir) {
         if (/\.xml$/.test(file)) {
           var resultContents = fs.readFileSync(filePath, 'utf8');
 
-          buffer += ("\n" + resultContents);
+          buffer += ("\n" + file + "\n" + resultContents);
         }
       }
     });

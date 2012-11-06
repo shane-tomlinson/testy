@@ -3,6 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
+ * Create a copy of the process environment and extend it with extra variables
+ */
+exports.copyExtendEnv = function() {
+  var args = [exports.deepCopy(process.env)].concat(arguments);
+  var env = exports.extend.apply(null, args);
+  return env;
+};
+
+/**
  * Create a deep copy of an object
  */
 exports.deepCopy = function(obj) {

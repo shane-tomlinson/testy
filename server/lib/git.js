@@ -5,24 +5,14 @@
 const child_process     = require('child_process'),
       spawn             = child_process.spawn,
       path              = require('path'),
-      url               = require('url');
+      url               = require('url'),
+      toolbelt          = require('./toolbelt');
 
 // getEnv is used to pass all the rest of the environment variables to git.
 // This prevents the user from being required to enter their password on a git
 // push
 function getEnv(extraEnv) {
-  var env = {};
-
-  // copy over the original environment
-  for(var key in process.env) {
-    env[key] = process.env[key];
-  }
-
-  // add each item in extraEnv
-  for(var key in extraEnv) {
-    env[key] = extraEnv[key];
-  }
-
+  var env = toolbelt.copyExtendEnv(extraEnv);
   return env;
 }
 
