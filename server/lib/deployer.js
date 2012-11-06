@@ -4,22 +4,24 @@
 
 const child_process     = require('child_process'),
       path              = require('path'),
-      fs                = require('fs');
+      fs                = require('fs'),
+      toolbelt          = require('./toolbelt');
 
 var deployerCmd = function(cmd, args, cwd, cb) {
-  // deploy.js does all its work based on the PWD variable.
-  process.env['PWD'] = cwd;
-  process.env['GIT_DIR'] = path.join(cwd, ".git");
-  process.env['GIT_WORK_TREE'] = cwd;
-  if (!process.env['PERSONA_BROWSER']) {
+  var env = toolbelt.deepCopy(process.env);
+  toolbelt.extend(env, {
+    // deploy.js does all its work based on the PWD variable.
+    PWD: cwd,
+    GIT_DIR: path.join(cwd, ".git"),
+    GIT_WORK_TREE: cwd,
     // If not already defined, force selenium tests to run
     // against all browsers.
-    process.env['PERSONA_BROWSER'] = 'all';
-  }
+    PERSONA_BROWSER: process.env['PERSONA_BROWSER'] || 'all'
+  });
 
   var options = {
     cwd: cwd,
-    env: process.env
+    env: env
   };
 
   var p = child_process.spawn("./scripts/deploy.js", [ cmd ].concat(args), options);
