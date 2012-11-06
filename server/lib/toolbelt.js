@@ -6,9 +6,12 @@
  * Create a copy of the process environment and extend it with extra variables
  */
 exports.copyExtendEnv = function() {
-  var args = [exports.deepCopy(process.env)].concat(arguments);
-  var env = exports.extend.apply(null, args);
-  return env;
+  var nowEnv = exports.deepCopy(process.env);
+  var extensions = [].slice.call(arguments, 0);
+  var args = [ nowEnv ].concat(extensions);
+
+  var newEnv = exports.extend.apply(null, args);
+  return newEnv;
 };
 
 /**

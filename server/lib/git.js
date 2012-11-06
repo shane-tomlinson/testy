@@ -3,10 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const child_process     = require('child_process'),
-      spawn             = child_process.spawn,
       path              = require('path'),
       url               = require('url'),
       toolbelt          = require('./toolbelt');
+
+// overridable for testing
+var   spawn             = child_process.spawn;
 
 // getEnv is used to pass all the rest of the environment variables to git.
 // This prevents the user from being required to enter their password on a git
@@ -14,17 +16,6 @@ const child_process     = require('child_process'),
 function getEnv(extraEnv) {
   var env = toolbelt.copyExtendEnv(extraEnv);
   return env;
-}
-
-function gitCommand(cmd, args, dir, cb) {
-  var env = dir ? getEnv({
-    GIT_DIR: path.join(dir, ".git"),
-    GIT_WORK_TREE: dir
-  }) : getEnv();
-
-  spawnCommand('git', [ cmd ].concat(args), {
-    env: env
-  }, cb);
 }
 
 function spawnCommand(cmd, args, opts, cb) {
@@ -38,16 +29,24 @@ function spawnCommand(cmd, args, opts, cb) {
   return p;
 }
 
-exports.clone = function(dir, repo, cb) {
-  var env = getEnv();
+exports.init = function(config) {
+  if (config.spawn) spawn = config.spawn;
+};
 
+exports.clone = function(dir, repo, cb) {
   spawnCommand('git', [ 'clone', repo, dir ], {
-    env: env
+    env: getEnv()
   }, cb);
 };
 
 exports.checkout = function(dir, sha, branch_name, cb) {
-  gitCommand('checkout', [ sha, "-b", branch_name ], dir, cb);
+  spawnCommand('git', [ 'checkout', sha, "-b", branch_name ], {
+    cwd: dir,
+    env: getEnv({
+      GIT_DIR: path.join(dir, ".git"),
+      GIT_WORK_TREE: dir
+    })
+  }, cb);
 };
 
 exports.install_deps = function(dir, dep, cb) {
@@ -62,7 +61,7 @@ exports.install_deps = function(dir, dep, cb) {
 
   spawnCommand('npm', args, {
     cwd: dir,
-    env: process.env
+    env: getEnv()
   }, cb);
 };
 

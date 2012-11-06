@@ -134,7 +134,7 @@ function runTests(req, res, next) {
       git.clone(tempDirPath, repoURL, function(err, r) {
         if(checkErr(state, err, res)) return;
 
-        sendUpdate(res, " >>> successful clone of repo: " + repoURL + ", checking out code");
+        sendUpdate(res, " >>> successful clone of repo: " + repoURL + ", checking out " + sha);
 
         git.checkout(tempDirPath, sha, "branch_to_test", function(err, r) {
           if(checkErr(state, err, res)) return;
