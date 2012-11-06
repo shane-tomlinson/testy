@@ -76,7 +76,7 @@ exports.getTestResults = function(cwd, name, cb) {
   p.stderr.pipe(process.stderr);
 };
 
-function getResultsFromDirectory(dir, done) {
+function getResultsFromDirectory(dir) {
   var buffer = "";
 
   try {
@@ -84,7 +84,10 @@ function getResultsFromDirectory(dir, done) {
     files.forEach(function(file) {
       var filePath = path.join(dir, file);
       var stats = fs.lstatSync(filePath);
-      if (stats.isFile()) {
+      if (stats.isDirectory()) {
+        buffer += getResultsFromDirectory(filePath);
+      }
+      else if (stats.isFile()) {
         if (/\.xml$/.test(file)) {
           var resultContents = fs.readFileSync(filePath, 'utf8');
 
