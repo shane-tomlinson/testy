@@ -4,7 +4,8 @@
 
 const child_process     = require('child_process'),
       spawn             = child_process.spawn,
-      path              = require('path');
+      path              = require('path'),
+      url               = require('url');
 
 // getEnv is used to pass all the rest of the environment variables to git.
 // This prevents the user from being required to enter their password on a git
@@ -74,4 +75,19 @@ exports.install_deps = function(dir, dep, cb) {
     env: process.env
   }, cb);
 };
+
+exports.owner = function(repoURL) {
+  var owner;
+
+  if (/^https:\/\//.test(repoURL) || /^git:\/\//.test(repoURL)) {
+    var parsedURL = url.parse(repoURL);
+    owner = parsedURL.path.split("/")[1];
+  }
+  else {
+    owner = /:([^\/]*)\//.exec(repoURL)[1];
+  }
+
+  return owner;
+}
+
 
