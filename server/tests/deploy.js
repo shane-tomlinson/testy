@@ -1,31 +1,43 @@
-#!/usr/bin/env node
-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var deployer = require('../deployer');
 
-var dirPath = process.argv[2];
-var sha = process.argv[3];
+const vows        = require("vows"),
+      assert      = require("assert"),
+      deployer    = require("../lib/deployer"),
+      ExecMock    = require("./mocks/exec").ExecMock,
+      SpawnMock   = require("./mocks/spawn").SpawnMock;
 
-if (!(dirPath && sha)) {
-  console.log("usage:", __filename, "<dir> <sha>");
-  process.exit(1);
-}
+vows.describe("deployer").addBatch({
+  "runTests": {
+    topic: function() {
+      this.execMock = new ExecMock();
+      deployer.init({
+        exec: this.execMock.exec
+      });
+      deployer.runTests("instance_name", this.callback);
+    },
 
+    "completes successfully": function(code) {
+      assert.equal(this.execMock.lastProcess.cmd.indexOf("ssh"), 0);
+      assert.ok(this.execMock.lastProcess.cmd.indexOf("instance_name.personatest.org") > 0);
+      assert.ok(this.execMock.lastProcess.cmd.indexOf("post-update.js") > 0);
+    }
+  },
 
-var aws_instance_name = "testy" + sha.substr(0, 8);
-console.log('working dir', dirPath, "name", aws_instance_name);
+  "getTestResults": {
+    topic: function() {
+      this.execMock = new ExecMock();
+      deployer.init({
+        exec: this.execMock.exec
+      });
+      deployer.getTestResults("results_directory", "instance_name", this.callback);
+    },
 
-/*deployer.create(dirPath, aws_instance_name, "c1.medium", function(err, r) {*/
-  /*deployer.update(dirPath, aws_instance_name, function(err, r) {*/
-    deployer.getTestResults(dirPath, aws_instance_name, function(err, r) {
-      console.log(r);
-    });
-    /*
-    deployer.destroy(dirPath, aws_instance_name, function(err, r) {
-    });
-    */
-  /*});*/
-/*});*/
+    "completes successfully": function(code) {
+      assert.equal(this.execMock.lastProcess.cmd.indexOf("scp"), 0);
+    }
+  }
+}).export(module);
+

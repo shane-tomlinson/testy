@@ -5,28 +5,16 @@
 const child_process     = require('child_process'),
       path              = require('path'),
       fs                = require('fs'),
+      fs_extra          = require('fs-extra'),
       toolbelt          = require('./toolbelt');
 
-var deployerCmd = function(cmd, args, cwd, cb) {
-  var env = toolbelt.copyExtendEnv({
-    // deploy.js does all its work based on the PWD variable.
-    PWD: cwd,
-    GIT_DIR: path.join(cwd, ".git"),
-    GIT_WORK_TREE: cwd,
-    // If not already defined, force selenium tests to run
-    // against all browsers.
-    PERSONA_BROWSER: process.env['PERSONA_BROWSER'] || 'all'
-  });
+// overridable for testing
+var spawn               = child_process.spawn,
+    exec                = child_process.exec;
 
-  var options = {
-    cwd: cwd,
-    env: env
-  };
-
-  var p = child_process.spawn("./scripts/deploy.js", [ cmd ].concat(args), options);
-  p.stdout.pipe(process.stdout);
-  p.stderr.pipe(process.stderr);
-  p.on('exit', cb);
+exports.init = function(config) {
+  if (config.spawn) spawn = config.spawn;
+  if (config.exec) exec = config.exec;
 };
 
 exports.create = function(cwd, name, type, cb) {
@@ -49,15 +37,28 @@ exports.destroy = function(cwd, name, cb) {
   deployerCmd("destroy", [name], cwd, cb);
 };
 
+exports.runTests = function(name, cb) {
+  console.log(" >>> running tests on aws instance", name);
+
+  var cmd = 'ssh ' + getSSHOptions(name) + ' node code/automation-tests/scripts/post-update.js';
+
+  var options = {
+    cwd: undefined,
+    env: process.env
+  };
+
+  var p = exec(cmd, options, cb);
+  p.stdout.pipe(process.stdout);
+  p.stderr.pipe(process.stderr);
+}
+
 exports.getTestResults = function(cwd, name, cb) {
   console.log(" >>> getting test results from aws instance", name);
 
   var resultsPath = path.join(cwd, "results");
 
   // make the results path if it does not exist.
-  if (!fs.existsSync(resultsPath)) {
-    fs.mkdirSync(resultsPath);
-  }
+  fs_extra.mkdirsSync(resultsPath);
 
   var options = {
     cwd: resultsPath,
@@ -66,15 +67,20 @@ exports.getTestResults = function(cwd, name, cb) {
     })
   };
 
-  var cmd = 'scp -o "StrictHostKeyChecking no" app@' + name + ".personatest.org:code/automation-tests/results/*.xml .";
+  var cmd = 'scp ' + getSSHOptions(name) + ':code/automation-tests/results/*.xml .';
 
-  var p = child_process.exec(cmd, options, function(err, r) {
+  var p = exec(cmd, options, function(err, r) {
     var results = getResultsFromDirectory(resultsPath);
     cb(null, results);
   });
   p.stdout.pipe(process.stdout);
   p.stderr.pipe(process.stderr);
 };
+
+function getSSHOptions(name) {
+  return '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null app@' + name + '.personatest.org';
+}
+
 
 function getResultsFromDirectory(dir) {
   var buffer = "";
@@ -102,4 +108,28 @@ function getResultsFromDirectory(dir) {
 
   return buffer;
 }
+
+function deployerCmd(cmd, args, cwd, cb) {
+  var env = toolbelt.copyExtendEnv({
+    // deploy.js does all its work based on the PWD variable.
+    PWD: cwd,
+    GIT_DIR: path.join(cwd, ".git"),
+    GIT_WORK_TREE: cwd,
+    // If not already defined, force selenium tests to run
+    // against all browsers.
+    PERSONA_BROWSER: process.env['PERSONA_BROWSER'] || 'all'
+  });
+
+  var options = {
+    cwd: cwd,
+    env: env
+  };
+
+  var p = spawn("./scripts/deploy.js", [ cmd ].concat(args), options);
+  p.stdout.pipe(process.stdout);
+  p.stderr.pipe(process.stderr);
+  p.on('exit', cb);
+};
+
+
 

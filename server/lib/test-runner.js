@@ -115,10 +115,11 @@ function runTests(req, res, next) {
     // 3) check out the correct sha
     // 4) install the deps
     // 5) create an ephemeral instance
-    // 6) update the ephemeral instance which cause the tests to run
-    // 7) get the results
-    // 8) delete the ephemeral instance
-    // 9) remove the temporary directory
+    // 6) update the ephemeral instance
+    // 7) run the tests
+    // 8) get the results
+    // 9) delete the ephemeral instance
+    // 10) remove the temporary directory
     res.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8'
     });
@@ -152,21 +153,26 @@ function runTests(req, res, next) {
               deployer.create(tempDirPath, aws_instance_name, "c1.medium", function(err, r) {
                 if(checkErr(state, err, res)) return;
 
-                sendUpdate(res, " >>> AWS instance created, pushing code & running tests");
+                sendUpdate(res, " >>> AWS instance created, pushing code");
                 state.instance_to_remove = aws_instance_name;
 
                 deployer.update(tempDirPath, aws_instance_name, function(err, r) {
                   if(checkErr(state, err, res)) return;
 
-                  sendUpdate(res, " >>> tests run, fetching results");
-                  deployer.getTestResults(tempDirPath, aws_instance_name, function(err, r) {
+                  sendUpdate(res, " >>> code pushed, running tests");
+
+                  deployer.runTests(aws_instance_name, function(err, r) {
                     if(checkErr(state, err, res)) return;
+                    sendUpdate(res, " >>> tests run, fetching results");
+                    deployer.getTestResults(tempDirPath, aws_instance_name, function(err, r) {
+                      if(checkErr(state, err, res)) return;
 
-                    sendUpdate(res, " >>> results fetched:");
-                    res.write(r);
-                    res.end();
+                      sendUpdate(res, " >>> results fetched:");
+                      res.write(r);
+                      res.end();
 
-                    teardown(state);
+                      teardown(state);
+                    });
                   });
                 })
               });
