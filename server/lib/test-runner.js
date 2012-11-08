@@ -148,12 +148,12 @@ function runTests(req, res, next) {
             git.install_deps(tempDirPath, "temp", function(err, r) {
               if(checkErr(state, err, res)) return;
 
-              sendUpdate(res, " >>> dependencies installed, creating AWS instance");
+              sendUpdate(res, " >>> dependencies installed, creating AWS instance: " + aws_instance_name);
 
               deployer.create(tempDirPath, aws_instance_name, "c1.medium", function(err, r) {
                 if(checkErr(state, err, res)) return;
 
-                sendUpdate(res, " >>> AWS instance created, pushing code");
+                sendUpdate(res, " >>> " + aws_instance_name + " created, pushing code");
                 state.instance_to_remove = aws_instance_name;
 
                 deployer.update(tempDirPath, aws_instance_name, function(err, r) {
