@@ -75,12 +75,7 @@ function sendUpdate(res, update) {
 
 
 
-function runTests(req, res, next) {
-  var sha = req.body.sha;
-  var repoURL = req.body.repo || DEFAULT_REPO_URL;
-
-  console.log("attempting:", repoURL, sha, req.connection.remoteAddress);
-
+function runTests(sha, repoURL, res) {
   if (!sha) {
     checkErr(undefined, new Error("sha must be specified"), res);
     return;
@@ -161,20 +156,14 @@ function runTests(req, res, next) {
 
                   sendUpdate(res, " >>> code pushed, running tests");
 
-                  deployer.runTests(aws_instance_name, function(err, r) {
-                    if(checkErr(state, err, res)) return;
-                    sendUpdate(res, " >>> tests run, fetching results");
-                    deployer.getTestResults(tempDirPath, aws_instance_name, function(err, r) {
-                      if(checkErr(state, err, res)) return;
+                  deployer.runTests(aws_instance_name, function(code, r) {
+                    sendUpdate(res, " >>> tests run, exited with code: " + code);
+                    res.write(r);
+                    res.end();
 
-                      sendUpdate(res, " >>> results fetched:");
-                      res.write(r);
-                      res.end();
-
-                      teardown(state);
-                    });
+                    teardown(state);
                   });
-                })
+                });
               });
             });
           });
@@ -200,6 +189,11 @@ function checkRepoAllowed(repoURL, res, done) {
 
 exports.setup = function(config) {
   testsBeingRun = config.tests;
-  return runTests;
-};
+  return function(req, res, next) {
+    var sha = req.body.sha;
+    var repoURL = req.body.repo || DEFAULT_REPO_URL;
 
+    console.log("attempting:", repoURL, sha, req.connection.remoteAddress);
+    runTests(sha, repoURL, res);
+  };
+};
