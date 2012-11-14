@@ -30,6 +30,19 @@ tests.init({
     });
   });
 
+  app.post('/github-receive', function(req, res, next) {
+    try {
+      var payload = JSON.parse(req.body.payload || "");
+      var sha = payload.after;
+      var repoURL = payload.repository.url;
+
+      tests.start_test(sha, repoURL, res);
+    } catch(e) {
+      console.log(e);
+    }
+    res.send(200, "Thanks GitHub!");
+  });
+
   app.post('/test', function(req, res, next) {
     // start_test is called by a POST, so the sha/url are in the request.body
     var sha = req.body.sha;
