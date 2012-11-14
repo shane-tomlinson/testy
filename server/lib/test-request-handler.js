@@ -5,8 +5,7 @@
 const test_runner       = require('./test-runner'),
       results           = require('./results');
 
-const DEFAULT_REPO_URL  = "git://github.com/mozilla/browserid.git",
-      MSG_NOT_ALLOWED   = "This repo cannot be tested by testy";
+const MSG_NOT_ALLOWED   = "This repo cannot be tested by testy";
 
 var runners = {};
 
@@ -14,24 +13,21 @@ exports.init = function(config, done) {
   test_runner.init(config, done);
 };
 
-exports.start_test = function(req, res, next) {
-  var sha = req.body.sha;
-  var repoURL = req.body.repo || DEFAULT_REPO_URL;
-
+exports.start_test = function(sha, repoURL, res) {
+  // Yes, this is right. This means if a POST comes in on this sha and repoURL,
+  // if a runner is not already running with this SHA, a new set of results
+  // will be generated and the old results blown away. This allows us to force
+  // the re-running of a test on a particular SHA.
   if (!runners[sha]) {
     var runner = createRunner(sha, repoURL, res);
     runner.start();
   }
   else {
-    // a test is already running, do something here.
-    throw "already running";
+    exports.get_test(sha, repoURL, res);
   }
 };
 
-exports.get_test = function(req, res, next) {
-  var sha = req.body.sha;
-  var repoURL = req.body.repo || DEFAULT_REPO_URL;
-
+exports.get_test = function(sha, repoURL, res) {
   // See if the test is being run. If it is, bind the response to the current
   // runner. If no runner exists, see if a results set exists. If it exists and
   // the status is done, hand the results back. If the status is "pending", we
@@ -43,11 +39,11 @@ exports.get_test = function(req, res, next) {
     }
     else if (data.status === "not_found") {
       // results not found at all, start a new runner.
-      exports.start_test(req, res, next);
+      exports.start_test(sha, repoURL, res);
     }
     else if (data.status === "pending") {
       // send the initial results
-      res.send(200, data.output);
+      res.write(data.output);
 
       // then attach the response to the running test_runner. Check to make
       // sure the runner exists in case there is a pending result from
@@ -89,11 +85,20 @@ function createRunner(sha, repoURL, res) {
 
 function bindResponseToRunner(res, runner) {
   runner.on("error", function(err) {
-    if (String(err) === "not allowed") {
-      res.send(401, MSG_NOT_ALLOWED);
-    }
-    else {
-      res.send(500, String(err));
+    var errStr = String(err);
+    var code = 500;
+
+    try {
+      if (errStr === "not allowed") {
+        errStr = MSG_NOT_ALLOWED;
+        code = 401;
+      }
+
+      // the headers may already be sent, if so an exception will be thrown.
+      // If an exception is thrown, just continue on our merry way.
+      res.send(code, errStr);
+    } catch(e) {
+      res.write(errStr);
     }
   });
 

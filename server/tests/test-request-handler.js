@@ -28,12 +28,7 @@ suite.addBatch({
     topic: function() {
       this.responseMock = new Response(this.callback);
 
-      tests.get_test({
-        body: {
-          sha: "known_done_test_sha",
-          repo: "test_repo_url"
-        }
-      }, this.responseMock, function() {});
+      tests.get_test("known_done_test_sha", "test_repo_url", this.responseMock);
     },
 
     'returns the results': function(results) {
@@ -43,18 +38,14 @@ suite.addBatch({
 }).addBatch({
   'get_test with known pending test': {
     topic: function() {
-      this.responseMock = new Response(this.callback);
+      this.responseMock = new Response();
+      this.responseMock.on("write", this.callback);
 
-      tests.get_test({
-        body: {
-          sha: "known_pending_test_sha",
-          repo: "test_repo_url"
-        }
-      }, this.responseMock, function() {});
+      tests.get_test("known_pending_test_sha", "test_repo_url", this.responseMock);
     },
 
     'returns the results': function(results) {
-      assert.equal("these are partial results", results);
+      assert.equal(results, "these are partial results");
     }
   }
 }).addBatch({
@@ -62,16 +53,10 @@ suite.addBatch({
     topic: function() {
       this.responseMock = new Response(this.callback);
 
-      tests.start_test({
-        body: {
-          sha: "unknown_test_sha",
-          repo: "test_repo_url"
-        }
-      }, this.responseMock, function() {});
+      tests.start_test("unknown_test_sha", "test_repo_url", this.responseMock);
     },
 
-    'returns a 200 with the results': function(code, results) {
-      assert.equal(200, code);
+    'returns a 200 with the results': function(results) {
       assert.ok(results);
     }
   }
@@ -83,12 +68,7 @@ suite.addBatch({
         results.get_result("unknown_test_sha_2", "test_repo_url", cb);
       });
 
-      tests.start_test({
-        body: {
-          sha: "unknown_test_sha_2",
-          repo: "test_repo_url"
-        }
-      }, responseMock, function() {});
+      tests.start_test("unknown_test_sha_2", "test_repo_url", responseMock);
     },
 
     'gets the results for the test': function(err, result) {
