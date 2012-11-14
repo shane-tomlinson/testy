@@ -4,7 +4,7 @@
 
 const express         = require('express'),
       path            = require('path'),
-      test_runner     = require('./lib/test-runner');
+      tests           = require('./lib/test-request-handler');
 
 var testsBeingRun = [];
 
@@ -16,15 +16,20 @@ app.set('views', path.join(__dirname, "views"));
 app.use(express.bodyParser())
    .use(express.static(path.join(__dirname, "..", "client")));
 
-app.get('/', function(req, res, next) {
-  res.render('index', {
-    tests: testsBeingRun
+
+tests.init({
+  tests: testsBeingRun
+}, function(err) {
+  app.get('/', function(req, res, next) {
+    res.render('index', {
+      tests: testsBeingRun
+    });
   });
+
+  app.post('/test', tests.start_test);
+  app.get('/test', tests.get_test);
+
+  var port = process.env['PORT'] || 3000;
+  app.listen(port, '127.0.0.1');
 });
 
-app.post('/test', test_runner.setup({
-  tests: testsBeingRun
-}));
-
-var port = process.env['PORT'] || 3000;
-app.listen(port, '127.0.0.1');
